@@ -5,16 +5,14 @@ import { Product } from './entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { QueryProductDto } from './dto/query-product.dto';
-import { BaseRepository, PaginationResult } from '../../common/repositories/base.repository';
+import { PaginationResult } from '../../common/repositories/base.repository';
 
 @Injectable()
-export class ProductsService extends BaseRepository<Product> {
+export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
-  ) {
-    super(productRepository);
-  }
+  ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
     // Check if product with same SKU already exists
@@ -142,6 +140,6 @@ export class ProductsService extends BaseRepository<Product> {
       throw new ConflictException('Cannot delete product with transaction history');
     }
 
-    await this.delete(id);
+    await this.productRepository.delete(id);
   }
 }

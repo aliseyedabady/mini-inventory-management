@@ -4,16 +4,14 @@ import { Repository } from 'typeorm';
 import { Inventory } from './entities/inventory.entity';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
 import { QueryInventoryDto } from './dto/query-inventory.dto';
-import { BaseRepository, PaginationResult } from '../../common/repositories/base.repository';
+import { PaginationResult } from '../../common/repositories/base.repository';
 
 @Injectable()
-export class InventoryService extends BaseRepository<Inventory> {
+export class InventoryService {
   constructor(
     @InjectRepository(Inventory)
     private inventoryRepository: Repository<Inventory>,
-  ) {
-    super(inventoryRepository);
-  }
+  ) {}
 
   async findAll(queryDto: QueryInventoryDto): Promise<PaginationResult<Inventory>> {
     const { 

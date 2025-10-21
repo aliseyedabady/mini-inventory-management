@@ -5,16 +5,14 @@ import { Category } from './entities/category.entity';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { QueryCategoryDto } from './dto/query-category.dto';
-import { BaseRepository, PaginationResult } from '../../common/repositories/base.repository';
+import { PaginationResult } from '../../common/repositories/base.repository';
 
 @Injectable()
-export class CategoriesService extends BaseRepository<Category> {
+export class CategoriesService {
   constructor(
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
-  ) {
-    super(categoryRepository);
-  }
+  ) {}
 
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
     // Check if category with same name already exists
@@ -26,7 +24,8 @@ export class CategoriesService extends BaseRepository<Category> {
       throw new ConflictException('Category with this name already exists');
     }
 
-    return this.create(createCategoryDto);
+    const category = this.categoryRepository.create(createCategoryDto);
+    return this.categoryRepository.save(category);
   }
 
   async findAll(queryDto: QueryCategoryDto): Promise<PaginationResult<Category>> {
@@ -49,11 +48,23 @@ export class CategoriesService extends BaseRepository<Category> {
       queryBuilder.orderBy(`category.${sortBy}`, sortOrder);
     }
 
-    return this.paginate({ page, limit, sortBy, sortOrder }, queryBuilder.getMany());
+    const skip = (page - 1) * limit;
+    const [data, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findOne(id: string): Promise<Category> {
-    const category = await this.findById(id);
+    const category = await this.categoryRepository.findOne({ where: { id } });
     if (!category) {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
@@ -74,7 +85,8 @@ export class CategoriesService extends BaseRepository<Category> {
       }
     }
 
-    return this.update(id, updateCategoryDto);
+    await this.categoryRepository.update(id, updateCategoryDto);
+    return this.findOne(id);
   }
 
   async remove(id: string): Promise<void> {
@@ -91,6 +103,6 @@ export class CategoriesService extends BaseRepository<Category> {
       throw new ConflictException('Cannot delete category with associated products');
     }
 
-    await this.delete(id);
+    await this.categoryRepository.delete(id);
   }
 }

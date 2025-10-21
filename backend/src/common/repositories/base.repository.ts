@@ -1,4 +1,4 @@
-import { Repository, FindManyOptions, FindOptionsWhere } from 'typeorm';
+import { Repository, FindManyOptions, FindOptionsWhere, FindOptionsOrder } from 'typeorm';
 
 export interface PaginationOptions {
   page: number;
@@ -23,16 +23,16 @@ export abstract class BaseRepository<T> {
   }
 
   async findById(id: string): Promise<T | null> {
-    return this.repository.findOne({ where: { id } as FindOptionsWhere<T> });
+    return this.repository.findOne({ where: { id } as any });
   }
 
   async create(data: Partial<T>): Promise<T> {
-    const entity = this.repository.create(data);
-    return this.repository.save(entity);
+    const entity = this.repository.create(data as any);
+    return this.repository.save(entity) as Promise<T>;
   }
 
   async update(id: string, data: Partial<T>): Promise<T | null> {
-    await this.repository.update(id, data);
+    await this.repository.update(id, data as any);
     return this.findById(id);
   }
 
@@ -52,11 +52,13 @@ export abstract class BaseRepository<T> {
     const { page, limit, sortBy, sortOrder = 'DESC' } = options;
     const skip = (page - 1) * limit;
 
+    const order: FindOptionsOrder<T> = sortBy ? { [sortBy]: sortOrder } as any : undefined;
+
     const [data, total] = await this.repository.findAndCount({
       ...findOptions,
       skip,
       take: limit,
-      order: sortBy ? { [sortBy]: sortOrder } : undefined,
+      order,
     });
 
     return {

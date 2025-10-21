@@ -5,18 +5,16 @@ import { Transaction, TransactionType } from './entities/transaction.entity';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { QueryTransactionDto } from './dto/query-transaction.dto';
-import { BaseRepository, PaginationResult } from '../../common/repositories/base.repository';
+import { PaginationResult } from '../../common/repositories/base.repository';
 import { InventoryService } from '../inventory/inventory.service';
 
 @Injectable()
-export class TransactionsService extends BaseRepository<Transaction> {
+export class TransactionsService {
   constructor(
     @InjectRepository(Transaction)
     private transactionRepository: Repository<Transaction>,
     private inventoryService: InventoryService,
-  ) {
-    super(transactionRepository);
-  }
+  ) {}
 
   async create(createTransactionDto: CreateTransactionDto): Promise<Transaction> {
     const { productId, type, quantity, unitPrice, totalAmount } = createTransactionDto;
@@ -176,7 +174,7 @@ export class TransactionsService extends BaseRepository<Transaction> {
       throw new BadRequestException('Cannot delete transaction due to inventory constraints');
     }
 
-    await this.delete(id);
+    await this.transactionRepository.delete(id);
   }
 
   async getTransactionSummary(productId?: string, startDate?: string, endDate?: string) {
